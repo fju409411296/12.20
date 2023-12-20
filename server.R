@@ -1,18 +1,33 @@
 library(shiny)
 
-shinyUI(pageWithSidebar(
+shinyServer(function(input, output) {
   
-  headerPanel("Summarize your data"), 
+  DATA = reactive({
+    if (is.null(input$files)) {return()} else {
+      dat = read.table(input$files$datapath,header=T)
+      return(dat) 
+    }
+  })
   
-  sidebarPanel(
-    fileInput(inputId="files", label=h4("Upload your data file:"), multiple=FALSE, accept="text/plain"),
-    helpText("Note: you only can upload the .txt file."),
-    sliderInput("n", h4("Select the observed rows:"), min=5, max=20, value=10)
-  ),
+  output$summary = renderPrint({
+    dat = DATA()
+    if (is.null(dat)) {return("You have to up load your data!!!")} else {
+      summary(dat)
+    }
+  })
   
-  mainPanel(
-    verbatimTextOutput("summary"),  
-    tableOutput("view")  
-  )  
+  output$scatterPlot = renderPlot({
+    dat = DATA()
+    if (is.null(dat)) {return()} else {
+      plot(dat,col=input$Color)
+    }
+  })
   
-))
+  output$view = renderTable({
+    dat = DATA()
+    if (is.null(dat)) {return()} else {
+      head(dat,input$n) 
+    }
+  })
+  
+})
